@@ -1,177 +1,99 @@
-/*gps gsm with ardunio solar traking team 1*/
-
+        /*gps gsm with ardunio solar traking team 1*/
 #include <TinyGPS++.h>
-
 #include <SoftwareSerial.h>
-
          static const int RXPin = 4, TXPin = 3;
-
    TinyGPSPlus gps;                        // create a  TinyGPS++ object
-
    SoftwareSerial gpsSerial(RXPin, TXPin);  // The serial connection to the GPS device     ss.end();
-
    SoftwareSerial gsm(2,3);                 //The serial connection to the Gsm device      gsm.end();
-
 void setup()
-
 {
-
   Serial.begin(9600);               // connect serial    
-
   gpsSerial.begin(9600);            //baud rate
-
   gpsSerial.end();
-
   
-
   gsm.println("AT+CIPSHUT");        //This is essential to start a fresh TCP/IP comnnection.
-
   delay(1000);
-
   printSerialData();
 
   gsm.println("AT+CIPMUX=0");       //Single IP connection mode is set by
-
   delay(2000);
-
   printSerialData();
 
   gsm.println("AT+CGATT=1");         //GPRS is attached using this
-
   delay(1000); 
-
   printSerialData();
-
                                       //Task is started with the command
-
   gsm.println("AT+CSTT=\"airtelgprs.com\",\"\",\"\"");  //setting the APN,username & password
-
   delay(5000);
-
   printSerialData();                 /*The Access Point Name of the mobile service provider can be known  by placing the SIM on your Android mobile. It’s shown under
-
          Settings  –> More..  –>  Cellular Networks –> Access Point Names
-
          In my case the APN is airtelgprs.com, user name & password are empty
-
          AT+CSTT=”bsnlnet”,””,””*/
 
   gsm.println("AT+CIICR");         //bring up wireless connection
-
   delay(6000);                    //This takes a little moment , so a delay of 6 secs is a must in the code.
-
   printSerialData();
 
   gsm.println("AT+CIFSR");        //get local  IP address 
-
   delay(2000);
-
   printSerialData();
 
   gsm.println("AT+CIPSTART=\"TCP\",\"122.178.80.228\",\"350\"");    /*("AT+CIPSTART=\"TCP\",\"api.thingspeak.com\",\"80\"")*/
-
   delay(5000);                                 /*Now we start up TCP connection with Server IP address
-
                                                & Port number of distant server*/
-
   printSerialData();
-
   delay(5000);
 
   gsm.println("AT+CIPSEND");   //Once the connection is established , we send data to remote server
-
   delay(2000);
-
   printSerialData();
-
                                   //enter our own server info.
-
     //String str="GET https:api.thingspeak.com/update?api_key=O13AOCHYYNU2LQ19&field1=" + String(t) +"&field2="+String(h); 
-
     //Serial.println(str);
-
     //gprsSerial.println(str);             //begin send data to remote server
-
   
-
   delay(4000);
-
   printSerialData();
-
  
-
   gsm.println((char)26);                 //sending
-
   delay(5000);                           //waitting for reply, important! the time is base on the condition of internet 
-
   gsm.println();
+
 
 tracking();
 
   gsm.println("AT+CIPSHUT");            //close the connection
-
   delay(1000);
-
   printSerialData();
-
   gsm.end();
-
 }
-
 void loop()
-
 {                                         // to get the  gps location from module
-
    while (gpsSerial.available() > 0)
-
     {
-
        gps.encode(gpsSerial.read());
-
        if (gps.location.isUpdated())
-
           {
-
             tracking();
-
           } 
-
           gpsSerial.end();
-
          
-
     }
-
       
-
 }        
-
 void printSerialData()
-
  {
-
   while(gsm.available()!=0)
-
   Serial.write(gsm.read());
-
   delay(5000);
-
  }
 
 void tracking()                            //display of gps loc. in server
-
  { 
-
   gsm.println(gps.location.lat(), 6);
-
   delay(3000);
-
   gsm.println(gps.location.lng(), 6);
-
   gsm.write(0x1A);
-
   delay(3000);
-
   gsm.end();
-
  }
